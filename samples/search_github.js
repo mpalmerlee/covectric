@@ -53,7 +53,26 @@ getGitHubRepos(function(err, body){
 
 		//search the vector space
 		var results = model.search("ruby library", 10);
-		console.log("Search Results:", results);
+		console.log("Search Results: ", results);
+
+		var similarResults = model.findSimilarDocuments(0.8);
+
+		//convert to a more friendly structure: an array of vectors with a new property: similarVectors:[]
+		var similarDocuments = [];
+		for(var id in similarResults){
+			var vector = model.getDocumentVector(id);
+			vector.similarVectors = [];
+			var sr = similarResults[id];
+			for(var r in sr){
+				var result = sr[r];
+				var sv = model.getDocumentVector(result.id);
+				sv.distance = result.distance;
+				vector.similarVectors.push(sv);
+			}
+			similarDocuments.push(vector);
+		}
+
+		console.log("Similar Documents: ", similarDocuments);
 	}
 });
 

@@ -32,6 +32,9 @@ covectric.Model.prototype.search = function(text, maxResults){
 covectric.Model.prototype.vectorSearch = function(inputVector, maxResults){
 	var matches = [];
 	for(var id in this.vectorBase) {
+		if(id == inputVector.id){
+			continue;
+		}
 		var vector = this.vectorBase[id];
 		var distance = covectric.util.vectorCosine(inputVector, vector);
 		if (distance != 0) {
@@ -44,6 +47,32 @@ covectric.Model.prototype.vectorSearch = function(inputVector, maxResults){
 	});
 
 	return matches.slice(0, maxResults);
+};
+
+covectric.Model.prototype.findSimilarDocuments = function(similarityThreshold){
+	var seenSimilarDocuments = {};
+	var similarResults = {};//indexed by vector id, value is an array of similar VectorMatch objects
+	for(var id in this.vectorBase){
+		seenSimilarDocuments[id] = true;
+		var vector = this.vectorBase[id];
+		var results = this.vectorSearch(vector);
+		for(var i in results){
+			var r = results[i];
+			if(r.distance >= similarityThreshold && (!(r.id in seenSimilarDocuments))){
+				if(!(id in similarResults)){
+					similarResults[id] = [];
+				}
+				similarResults[id].push(r);
+			}
+		}
+	}
+
+	return similarResults;
+};
+
+covectric.Model.prototype.getDocumentVector = function(id){
+	//poor man's clone
+	return JSON.parse(JSON.stringify(this.vectorBase[id]));
 };
 
 covectric.Model.prototype.recomputeVectorBaseTokenWeights = function(){
@@ -134,9 +163,15 @@ covectric.Model.VectorMatch = function(id, distance, name){
 covectric.util = {
 	tokenizeString: function(text){
 		text = text.toLowerCase();
-		text = text.replace(/\?|\.|\,|!|\-|\'|\`|\~|\[|\]|\{|\}/g, "");
+		text = text.replace(/\?|\.|,|!|\-|'|`|;|\~|\(|\)|\[|\]|\{|\}/g, "");//(/\W/g," ");
 		text = text.replace(/\b(the|it|in|a|and|to|of|is|for|as|on|his|was|i|they|are|that|you|at|he|with|be|had|have|what|or|this|but)\b/gi, "");
-		return text.split(/\s/);
+		var tokens = text.split(/\s/);
+		for(var i = tokens.length; i >= 0; i--){
+			if(tokens[i] == ""){
+				tokens.splice(i, 1);
+			}
+		}
+		return tokens;
 	},
 
 	vectorCosine: function(vector1, vector2){
