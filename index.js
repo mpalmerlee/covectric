@@ -96,7 +96,7 @@ covectric.Model.prototype.upsertDocument = function(id, name, text, baseTokenWei
 
 	//process text and add to vector dimensionLengths
 	var tokens = this.textTransformFunction(text);
-	vector.addTokens(tokens);
+	vector.addTokens(tokens, baseTokenWeight);
 
 	//if we aren't computing token weights based on tf*idf, we can save some memory
 	if(this.config.computeTokenWeightsBasedOnFrequency) {
@@ -162,6 +162,10 @@ covectric.Model.VectorMatch = function(id, distance, name){
 
 covectric.util = {
 	tokenizeString: function(text){
+		if(!text){
+			return [];
+		}
+		text = text + "";
 		text = text.toLowerCase();
 		text = text.replace(/\?|\.|,|!|\-|'|`|;|\~|\(|\)|\[|\]|\{|\}/g, "");//(/\W/g," ");
 		text = text.replace(/\b(the|it|in|a|and|to|of|is|for|as|on|his|was|i|they|are|that|you|at|he|with|be|had|have|what|or|this|but)\b/gi, "");
