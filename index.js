@@ -82,8 +82,7 @@ covectric.Model.prototype.recomputeVectorBaseTokenWeights = function(){
 	}
 };
 
-covectric.Model.prototype.upsertDocument = function(id, name, text, baseTokenWeight){
-	baseTokenWeight = baseTokenWeight || 1;
+covectric.Model.prototype.upsertDocument = function(id, name, text, baseTokenWeight, computeTokenWeights){
 
 	var vector = null;
 	if(!(id in this.vectorBase)){
@@ -94,9 +93,7 @@ covectric.Model.prototype.upsertDocument = function(id, name, text, baseTokenWei
 		vector.name = name;
 	}
 
-	//process text and add to vector dimensionLengths
-	var tokens = this.textTransformFunction(text);
-	vector.addTokens(tokens, baseTokenWeight);
+	var tokens = this.updateVector(vector, text, baseTokenWeight, computeTokenWeights);
 
 	//if we aren't computing token weights based on tf*idf, we can save some memory
 	if(this.config.computeTokenWeightsBasedOnFrequency) {
@@ -111,6 +108,23 @@ covectric.Model.prototype.upsertDocument = function(id, name, text, baseTokenWei
 		}
 	}
 
+	return vector;
+};
+
+covectric.Model.prototype.updateVector = function(vector, text, baseTokenWeight, computeTokenWeights){
+	baseTokenWeight = baseTokenWeight || 1;
+
+	//process text and add to vector dimensionLengths
+	var tokens = this.textTransformFunction(text);
+	vector.addTokens(tokens, baseTokenWeight);
+
+	//NOTE: when we populate the entire vectorBase initially we don't want to do this for each vector
+	// because we have to do a 2nd pass anyways after all documents are in the vectorBase
+	if(computeTokenWeights){
+		this.computeTokenWeights(this.dimensionDocumentCount, this.vectorBaseLength());
+	}
+
+	return tokens;
 };
 
 covectric.Model.VectorN = function(id, name){
@@ -167,11 +181,15 @@ covectric.util = {
 		}
 		text = text + "";
 		text = text.toLowerCase();
-		text = text.replace(/\?|\.|,|!|\-|'|`|;|\~|\(|\)|\[|\]|\{|\}/g, "");//(/\W/g," ");
+		text = text.replace(/\B\W|\W\B/g," ");//(/\?|\.|,|!|\-|'|`|:|;|\~|\(|\)|\[|\]|\{|\}/g, "");
 		text = text.replace(/\b(the|it|in|a|and|to|of|is|for|as|on|his|was|i|they|are|that|you|at|he|with|be|had|have|what|or|this|but)\b/gi, "");
 		var tokens = text.split(/\s/);
 		for(var i = tokens.length; i >= 0; i--){
-			if(tokens[i] == ""){
+			if(tokens[i]){
+				tokens[i] = tokens[i].trim();
+			}
+
+			if(!tokens[i]){
 				tokens.splice(i, 1);
 			}
 		}

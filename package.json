@@ -1,6 +1,6 @@
 {
   "name": "covectric",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Covectric is a simple vector based search engine using cosine similarity and tf-idf methods for finding text similarity.",
   "main": "index.js",
   "scripts": {
