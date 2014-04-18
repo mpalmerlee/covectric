@@ -66,7 +66,7 @@ getGitHubRepos(function(err, body){
 			for(var r in sr){
 				var result = sr[r];
 				var sv = model.getDocumentVector(result.id);
-				sv.distance = result.distance;
+				sv.similarity = result.similarity;
 				vector.similarVectors.push(sv);
 			}
 			similarDocuments.push(vector);

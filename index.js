@@ -36,14 +36,14 @@ covectric.Model.prototype.vectorSearch = function(inputVector, maxResults){
 			continue;
 		}
 		var vector = this.vectorBase[id];
-		var distance = covectric.util.vectorCosine(inputVector, vector);
-		if (distance != 0) {
+		var similarity = covectric.util.vectorCosine(inputVector, vector);
+		if (similarity != 0) {
 			//this match has at least one dimensional commonality
-			matches.push(new covectric.Model.VectorMatch(vector.id, distance, vector.name));
+			matches.push(new covectric.Model.VectorMatch(vector.id, similarity, vector.name));
 		}
 	}
 	matches.sort(function(a, b){
-		return b.distance - a.distance;
+		return b.similarity - a.similarity;
 	});
 
 	return matches.slice(0, maxResults);
@@ -58,7 +58,7 @@ covectric.Model.prototype.findSimilarDocuments = function(similarityThreshold){
 		var results = this.vectorSearch(vector);
 		for(var i in results){
 			var r = results[i];
-			if(r.distance >= similarityThreshold && (!(r.id in seenSimilarDocuments))){
+			if(r.similarity >= similarityThreshold && (!(r.id in seenSimilarDocuments))){
 				if(!(id in similarResults)){
 					similarResults[id] = [];
 				}
@@ -182,9 +182,9 @@ covectric.Model.VectorN.prototype.vectorLength = function(){
 	return Math.sqrt(sum);
 };
 
-covectric.Model.VectorMatch = function(id, distance, name){
+covectric.Model.VectorMatch = function(id, similarity, name){
 	this.id = id;
-	this.distance = distance;
+	this.similarity = similarity;
 	this.name = name;
 };
 
