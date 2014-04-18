@@ -14,7 +14,7 @@ covectric.Model = function(){
 
 };
 
-covectric.Model.prototype.vectorBaseLength = function(){
+covectric.Model.prototype.countVectorBaseDocuments = function(){
 	var length = 0;
 	for(var vi in this.vectorBase){
 		length++;
@@ -25,7 +25,7 @@ covectric.Model.prototype.vectorBaseLength = function(){
 covectric.Model.prototype.search = function(text, maxResults){
 	var vector = new covectric.Model.VectorN(-1, text);
 	vector.addTokens(this.textTransformFunction(text));
-	vector.computeTokenWeights(this.dimensionDocumentCount, this.vectorBaseLength());
+	vector.computeTokenWeights(this.dimensionDocumentCount, this.countVectorBaseDocuments());
 	return this.vectorSearch(vector, maxResults);
 };
 
@@ -76,9 +76,9 @@ covectric.Model.prototype.getDocumentVector = function(id){
 };
 
 covectric.Model.prototype.recomputeVectorBaseTokenWeights = function(){
-	var vectorBaseLength = this.vectorBaseLength();
+	var vectorBaseDocumentCount = this.countVectorBaseDocuments();
 	for(var id in this.vectorBase){
-		this.vectorBase[id].computeTokenWeights(this.dimensionDocumentCount, vectorBaseLength);
+		this.vectorBase[id].computeTokenWeights(this.dimensionDocumentCount, vectorBaseDocumentCount);
 	}
 };
 
@@ -95,6 +95,12 @@ covectric.Model.prototype.upsertDocument = function(id, name, text, baseTokenWei
 
 	var tokens = this.updateVector(vector, text, baseTokenWeight, computeTokenWeights);
 
+	this.updateDimensionDocumentCountForTokens(tokens);
+
+	return vector;
+};
+
+covectric.Model.prototype.updateDimensionDocumentCountForTokens = function(tokens){
 	//if we aren't computing token weights based on tf*idf, we can save some memory
 	if(this.config.computeTokenWeightsBasedOnFrequency) {
 		for (var t in tokens) {
@@ -107,11 +113,18 @@ covectric.Model.prototype.upsertDocument = function(id, name, text, baseTokenWei
 			}
 		}
 	}
-
-	return vector;
 };
 
-covectric.Model.prototype.updateVector = function(vector, text, baseTokenWeight, computeTokenWeights){
+/**
+ *
+ * @param vector - the vector to update
+ * @param text - the text to add to the vector
+ * @param baseTokenWeight - optional, defaults to 1
+ * @param computeTokenWeights - optional, defaults to false
+ * @param vectorBaseDocumentCount - optional, defaults to lookup the vector base document count if computeTokenWeights is true
+ * @returns {*}
+ */
+covectric.Model.prototype.updateVector = function(vector, text, baseTokenWeight, computeTokenWeights, vectorBaseDocumentCount){
 	baseTokenWeight = baseTokenWeight || 1;
 
 	//process text and add to vector dimensionLengths
@@ -121,7 +134,8 @@ covectric.Model.prototype.updateVector = function(vector, text, baseTokenWeight,
 	//NOTE: when we populate the entire vectorBase initially we don't want to do this for each vector
 	// because we have to do a 2nd pass anyways after all documents are in the vectorBase
 	if(computeTokenWeights){
-		this.computeTokenWeights(this.dimensionDocumentCount, this.vectorBaseLength());
+		vectorBaseDocumentCount = vectorBaseDocumentCount || this.countVectorBaseDocuments();
+		vector.computeTokenWeights(this.dimensionDocumentCount, vectorBaseDocumentCount);
 	}
 
 	return tokens;
@@ -144,7 +158,7 @@ covectric.Model.VectorN.prototype.addTokens = function(tokens, baseTokenWeight){
 	}
 };
 
-covectric.Model.VectorN.prototype.computeTokenWeights = function(dimensionDocumentCount, vectorBaseLength){
+covectric.Model.VectorN.prototype.computeTokenWeights = function(dimensionDocumentCount, vectorBaseDocumentCount){
 	this.dimensionLengths = {};
 	for(var tbw in this.tokenBaseWeights){
 		this.dimensionLengths[tbw] = this.tokenBaseWeights[tbw];
@@ -153,7 +167,7 @@ covectric.Model.VectorN.prototype.computeTokenWeights = function(dimensionDocume
 	//compute tf*idf weighting
 	for(var dim in this.dimensionLengths){
 		if(dim in dimensionDocumentCount){
-			var inverseDocFreq = Math.log(vectorBaseLength / dimensionDocumentCount[dim]);
+			var inverseDocFreq = Math.log(vectorBaseDocumentCount / dimensionDocumentCount[dim]);
 			this.dimensionLengths[dim] = this.dimensionLengths[dim] * inverseDocFreq;
 		}
 	}
