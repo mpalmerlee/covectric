@@ -3,6 +3,13 @@ covectric
 
 Covectric is a simple vector based search engine using cosine similarity and tf–idf methods for finding text similarity between documents.
 
+Define "covectric"
+------------------
+
+Two documents are said to be covectric if they share one or more dimensions.
+
+
+
 Install
 -------
 ```bash
@@ -35,6 +42,11 @@ Samples
 -------
 See the samples directory in the repo for more examples of using Covectric
 
+Reference
+---------
+http://en.wikipedia.org/wiki/Vector_space_model
+http://en.wikipedia.org/wiki/Cosine_similarity
+http://en.wikipedia.org/wiki/Tf-idf
 
 License
 -------
