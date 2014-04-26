@@ -38,15 +38,20 @@ console.log("Search Results:", results);
 
 ```
 
+
 Samples
 -------
 See the samples directory in the repo for more examples of using Covectric
 
+
 Reference
 ---------
 http://en.wikipedia.org/wiki/Vector_space_model
+
 http://en.wikipedia.org/wiki/Cosine_similarity
+
 http://en.wikipedia.org/wiki/Tf-idf
+
 
 License
 -------
