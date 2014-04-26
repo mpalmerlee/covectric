@@ -6,7 +6,7 @@ Covectric is a simple vector based search engine using cosine similarity and tfâ
 Define "covectric"
 ------------------
 
-Two documents are said to be covectric if they share one or more dimensions.
+Two documents are said to be covectric if they share at least one dimension (or term).
 
 
 
