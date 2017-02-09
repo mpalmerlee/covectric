@@ -154,15 +154,15 @@ covectric.Model.VectorN.prototype.addTokens = function(tokens, baseTokenWeight){
 	for(var t in tokens) {
 		var token = tokens[t];
 		this.tokenBaseWeights[token] = baseTokenWeight;
-		this.dimensionLengths[token] = baseTokenWeight;
+		if(this.dimensionLengths[token]) {
+			this.dimensionLengths[token] += baseTokenWeight;
+		} else {
+			this.dimensionLengths[token] = baseTokenWeight;			
+		}
 	}
 };
 
 covectric.Model.VectorN.prototype.computeTokenWeights = function(dimensionDocumentCount, vectorBaseDocumentCount){
-	this.dimensionLengths = {};
-	for(var tbw in this.tokenBaseWeights){
-		this.dimensionLengths[tbw] = this.tokenBaseWeights[tbw];
-	}
 
 	//compute tf*idf weighting
 	for(var dim in this.dimensionLengths){
